@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Dari Fitness">
+<title>Dari Fitness</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0a;
+  --surface: #141414;
+  --surface2: #1e1e1e;
+  --surface3: #282828;
+  --accent: #c8f06a;
+  --accent-dim: rgba(200,240,106,0.12);
+  --accent-water: #5bc8f5;
+  --accent-water-dim: rgba(91,200,245,0.12);
+  --text: #f0f0f0;
+  --text2: #888;
+  --text3: #555;
+  --border: rgba(255,255,255,0.07);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --nav-h: 72px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: var(--font-body); }
+
+/* LAYOUT */
+#app { display: flex; flex-direction: column; height: 100dvh; }
+.screen { display: none; flex: 1; overflow-y: auto; padding: 0 16px calc(var(--nav-h) + var(--safe-bottom) + 16px); }
+.screen.active { display: block; }
+.screen::-webkit-scrollbar { display: none; }
+
+/* NAV */
+nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  height: calc(var(--nav-h) + var(--safe-bottom));
+  background: rgba(14,14,14,0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  display: flex; align-items: flex-start; padding-top: 8px;
+  z-index: 100;
+}
+nav button {
+  flex: 1; background: none; border: none; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 8px 4px; color: var(--text3); transition: color 0.2s;
+  font-size: 10px; font-family: var(--font-body); letter-spacing: 0.02em;
+}
+nav button.active { color: var(--accent); }
+nav button svg { width: 22px; height: 22px; }
+
+/* HEADER */
+.page-header {
+  padding: 20px 0 12px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.page-title {
+  font-family: var(--font-display);
+  font-size: 24px; font-weight: 700; color: var(--text);
+  letter-spacing: -0.02em;
+}
+.page-sub { font-size: 13px; color: var(--text2); margin-top: 2px; }
+
+/* CARDS */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 10px;
+}
+.card-sm { padding: 12px 14px; border-radius: var(--radius-sm); }
+
+/* TAGS */
+.tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px; border-radius: 20px;
+  font-size: 11px; font-weight: 500; margin-bottom: 10px;
+}
+.tag-strength { background: rgba(200,240,106,0.12); color: #c8f06a; }
+.tag-cardio { background: rgba(91,200,245,0.12); color: #5bc8f5; }
+.tag-climb { background: rgba(255,160,90,0.12); color: #ffa05a; }
+.tag-rest { background: rgba(136,136,136,0.1); color: #888; }
+
+/* EXERCISE ROWS */
+.ex-row {
+  display: flex; align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.ex-row:last-child { border-bottom: none; padding-bottom: 0; }
+.ex-info { flex: 1; }
+.ex-name { font-size: 14px; font-weight: 500; color: var(--text); }
+.ex-detail { font-size: 12px; color: var(--text2); margin-top: 1px; }
+.check-btn {
+  width: 30px; height: 30px; border-radius: 50%;
+  border: 1.5px solid var(--surface3);
+  background: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s; flex-shrink: 0;
+}
+.check-btn.done { background: var(--accent); border-color: var(--accent); }
+.check-btn svg { width: 14px; height: 14px; color: var(--bg); opacity: 0; }
+.check-btn.done svg { opacity: 1; }
+
+/* WEEK NAV */
+.week-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.week-nav-btn {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 7px 12px;
+  color: var(--text2); cursor: pointer; font-size: 18px; line-height: 1;
+}
+.week-label { font-family: var(--font-display); font-size: 16px; font-weight: 500; }
+
+/* STATS GRID */
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+.stat-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 14px 12px;
+}
+.stat-label { font-size: 11px; color: var(--text2); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
+.stat-val { font-family: var(--font-display); font-size: 26px; font-weight: 700; color: var(--text); line-height: 1; }
+.stat-unit { font-size: 12px; color: var(--text2); font-family: var(--font-body); }
+
+/* PROGRESS */
+.prog-row { margin-bottom: 14px; }
+.prog-labels { display: flex; justify-content: space-between; font-size: 12px; color: var(--text2); margin-bottom: 6px; }
+.prog-bar { height: 5px; background: var(--surface3); border-radius: 3px; overflow: hidden; }
+.prog-fill { height: 100%; border-radius: 3px; transition: width 0.5s; }
+
+/* WATER */
+.water-hero {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px 16px 16px;
+  margin-bottom: 10px;
+  text-align: center;
+}
+.water-circle-wrap { position: relative; width: 160px; height: 160px; margin: 0 auto 16px; }
+.water-svg { width: 160px; height: 160px; transform: rotate(-90deg); }
+.water-ring-bg { fill: none; stroke: var(--surface3); stroke-width: 8; }
+.water-ring { fill: none; stroke: var(--accent-water); stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 0.4s; }
+.water-center {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center; pointer-events: none;
+}
+.water-amt { font-family: var(--font-display); font-size: 30px; font-weight: 700; color: var(--text); line-height: 1; }
+.water-goal-lbl { font-size: 11px; color: var(--text2); margin-top: 3px; }
+.water-btns { display: flex; gap: 8px; justify-content: center; margin-top: 4px; }
+.water-btn {
+  flex: 1; max-width: 90px;
+  padding: 10px 0; border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface2); color: var(--text2);
+  font-size: 13px; font-weight: 500; cursor: pointer;
+  transition: all 0.15s; font-family: var(--font-body);
+}
+.water-btn:active { background: var(--accent-water-dim); color: var(--accent-water); border-color: var(--accent-water); }
+.water-btn-primary {
+  background: var(--accent-water-dim); color: var(--accent-water);
+  border-color: rgba(91,200,245,0.25);
+}
+.water-log-wrap { max-height: 200px; overflow-y: auto; }
+.water-log-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px;
+}
+.water-log-row:last-child { border-bottom: none; }
+.water-time { color: var(--text2); }
+
+/* NUTRITION */
+.goal-select-row { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+.goal-chip {
+  padding: 7px 14px; border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface2); color: var(--text2);
+  font-size: 13px; cursor: pointer; font-family: var(--font-body);
+  transition: all 0.15s;
+}
+.goal-chip.active { background: var(--accent-dim); color: var(--accent); border-color: rgba(200,240,106,0.3); }
+.gen-btn {
+  width: 100%; padding: 14px;
+  background: var(--accent); color: var(--bg);
+  border: none; border-radius: var(--radius-sm);
+  font-size: 15px; font-weight: 600; cursor: pointer;
+  font-family: var(--font-display);
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: opacity 0.15s; margin-bottom: 14px;
+}
+.gen-btn:disabled { opacity: 0.5; }
+.meal-card { margin-bottom: 10px; }
+.meal-time-lbl { font-size: 11px; color: var(--accent-water); font-weight: 500; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 4px; }
+.meal-name { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.meal-desc { font-size: 12px; color: var(--text2); margin-bottom: 8px; line-height: 1.5; }
+.macro-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+.macro-pill {
+  padding: 3px 8px; border-radius: 20px;
+  font-size: 11px; font-weight: 500; background: var(--surface3); color: var(--text2);
+}
+.macro-pill.kcal { background: var(--accent-dim); color: var(--accent); }
+.total-card {
+  background: var(--surface2); border: 1px solid rgba(200,240,106,0.15);
+  border-radius: var(--radius-sm); padding: 14px;
+  display: flex; gap: 16px; margin-bottom: 10px;
+}
+.total-item { text-align: center; flex: 1; }
+.total-val { font-family: var(--font-display); font-size: 18px; font-weight: 700; color: var(--accent); }
+.total-lbl { font-size: 10px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
+
+/* NOTIFICATION BANNER */
+.notif-banner {
+  background: var(--surface2);
+  border: 1px solid rgba(91,200,245,0.2);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 10px;
+}
+.notif-icon { font-size: 20px; flex-shrink: 0; }
+.notif-text { flex: 1; font-size: 13px; color: var(--text2); line-height: 1.4; }
+.notif-btn {
+  background: var(--accent-water-dim); color: var(--accent-water);
+  border: 1px solid rgba(91,200,245,0.25); border-radius: var(--radius-sm);
+  padding: 7px 12px; font-size: 12px; font-weight: 500;
+  cursor: pointer; font-family: var(--font-body); white-space: nowrap;
+}
+
+/* REMINDER SETTINGS */
+.reminder-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 0; border-bottom: 1px solid var(--border);
+}
+.reminder-row:last-child { border-bottom: none; }
+.toggle {
+  width: 44px; height: 26px; border-radius: 13px;
+  background: var(--surface3); position: relative; cursor: pointer;
+  transition: background 0.2s; border: none; flex-shrink: 0;
+}
+.toggle.on { background: var(--accent-water); }
+.toggle::after {
+  content: ''; position: absolute;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: white; top: 3px; left: 3px;
+  transition: transform 0.2s;
+}
+.toggle.on::after { transform: translateX(18px); }
+select {
+  background: var(--surface3); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 8px 10px;
+  font-size: 13px; color: var(--text); width: 100%; margin-top: 8px;
+  font-family: var(--font-body);
+}
+
+/* LOADING DOTS */
+.dots { display: inline-flex; gap: 4px; }
+.dots span { width: 5px; height: 5px; border-radius: 50%; background: var(--bg); animation: blink 1.2s infinite; }
+.dots span:nth-child(2) { animation-delay: 0.2s; }
+.dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes blink { 0%,80%,100%{opacity:0.2}40%{opacity:1} }
+
+/* TOAST */
+.toast {
+  position: fixed; bottom: calc(var(--nav-h) + var(--safe-bottom) + 12px); left: 16px; right: 16px;
+  background: var(--surface3); color: var(--text);
+  padding: 12px 16px; border-radius: var(--radius-sm);
+  font-size: 14px; text-align: center;
+  transform: translateY(20px); opacity: 0;
+  transition: all 0.25s; z-index: 200; pointer-events: none;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+
+/* SECTION HEADING */
+.section-heading {
+  font-size: 11px; font-weight: 600; color: var(--text3);
+  text-transform: uppercase; letter-spacing: 0.1em;
+  margin: 18px 0 10px;
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- TRAINING SCREEN -->
+<div id="screen-training" class="screen active">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Training</div>
+      <div class="page-sub" id="training-date"></div>
+    </div>
+  </div>
+  <div class="week-nav">
+    <button class="week-nav-btn" onclick="changeWeek(-1)">‹</button>
+    <span class="week-label" id="week-label">Woche 1</span>
+    <button class="week-nav-btn" onclick="changeWeek(1)">›</button>
+  </div>
+  <div id="training-content"></div>
+</div>
+
+<!-- WATER SCREEN -->
+<div id="screen-water" class="screen">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Wasser</div>
+      <div class="page-sub">Täglich tracken, gesund bleiben</div>
+    </div>
+  </div>
+
+  <div id="notif-banner" class="notif-banner">
+    <div class="notif-icon">🔔</div>
+    <div class="notif-text">Benachrichtigungen aktivieren für Trink-Erinnerungen</div>
+    <button class="notif-btn" onclick="requestNotifPermission()">Aktivieren</button>
+  </div>
+
+  <div class="water-hero">
+    <div class="water-circle-wrap">
+      <svg class="water-svg" viewBox="0 0 160 160">
+        <circle class="water-ring-bg" cx="80" cy="80" r="68"/>
+        <circle class="water-ring" id="water-ring" cx="80" cy="80" r="68"
+          stroke-dasharray="427" stroke-dashoffset="427"/>
+      </svg>
+      <div class="water-center">
+        <div class="water-amt" id="water-ml">0</div>
+        <div class="water-goal-lbl">von <span id="water-goal-lbl">2500</span> ml</div>
+      </div>
+    </div>
+    <div class="water-btns">
+      <button class="water-btn" onclick="addWater(150)">+150 ml</button>
+      <button class="water-btn water-btn-primary" onclick="addWater(250)">+250 ml</button>
+      <button class="water-btn" onclick="addWater(500)">+500 ml</button>
+    </div>
+  </div>
+
+  <p class="section-heading">Ziel anpassen</p>
+  <div class="card card-sm" style="margin-bottom:10px">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <span style="font-size:14px;color:var(--text2)">Tagesziel</span>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button onclick="adjustGoal(-250)" style="background:var(--surface3);border:1px solid var(--border);border-radius:8px;width:30px;height:30px;color:var(--text);font-size:18px;cursor:pointer">−</button>
+        <span style="font-family:var(--font-display);font-size:16px;font-weight:600" id="goal-display">2500 ml</span>
+        <button onclick="adjustGoal(250)" style="background:var(--surface3);border:1px solid var(--border);border-radius:8px;width:30px;height:30px;color:var(--text);font-size:18px;cursor:pointer">+</button>
+      </div>
+    </div>
+  </div>
+
+  <p class="section-heading">Erinnerungen</p>
+  <div class="card">
+    <div class="reminder-row">
+      <div>
+        <div style="font-size:14px;font-weight:500">Trink-Erinnerungen</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px">Alle X Stunden erinnern</div>
+      </div>
+      <button class="toggle" id="reminder-toggle" onclick="toggleReminder()"></button>
+    </div>
+    <div id="reminder-settings" style="display:none;padding-top:8px">
+      <select id="reminder-interval" onchange="saveReminderSettings()">
+        <option value="1">Jede Stunde</option>
+        <option value="1.5">Alle 1,5 Stunden</option>
+        <option value="2" selected>Alle 2 Stunden</option>
+        <option value="3">Alle 3 Stunden</option>
+      </select>
+    </div>
+  </div>
+
+  <p class="section-heading">Heute getrunken</p>
+  <div class="card">
+    <div class="water-log-wrap" id="water-log">
+      <div style="text-align:center;padding:20px;color:var(--text3);font-size:13px">Noch nichts getrunken heute</div>
+    </div>
+    <button onclick="resetWater()" style="width:100%;margin-top:10px;padding:9px;background:none;border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text3);font-size:12px;cursor:pointer">Tag zurücksetzen</button>
+  </div>
+</div>
+
+<!-- NUTRITION SCREEN -->
+<div id="screen-nutrition" class="screen">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Ernährung</div>
+      <div class="page-sub">KI-generierte Tagespläne</div>
+    </div>
+  </div>
+  <div class="goal-select-row">
+    <button class="goal-chip active" data-goal="maintain" onclick="setGoal(this,'maintain')">Gewicht halten</button>
+    <button class="goal-chip" data-goal="bulk" onclick="setGoal(this,'bulk')">Bulk</button>
+    <button class="goal-chip" data-goal="cut" onclick="setGoal(this,'cut')">Cut</button>
+  </div>
+  <div class="goal-select-row">
+    <button class="goal-chip active" data-diet="omni" onclick="setDiet(this,'omni')">Alles</button>
+    <button class="goal-chip" data-diet="veggie" onclick="setDiet(this,'veggie')">Vegetarisch</button>
+    <button class="goal-chip" data-diet="vegan" onclick="setDiet(this,'vegan')">Vegan</button>
+  </div>
+  <button class="gen-btn" id="gen-btn" onclick="generateMeal()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v3M18.36 5.64l-2.12 2.12M21 12h-3M18.36 18.36l-2.12-2.12M12 21v-3M5.64 18.36l2.12-2.12M3 12h3M5.64 5.64l2.12 2.12"/></svg>
+    <span id="gen-label">Plan für heute generieren</span>
+    <span class="dots" id="gen-dots" style="display:none"><span></span><span></span><span></span></span>
+  </button>
+  <div id="meal-output"></div>
+</div>
+
+<!-- STATS SCREEN -->
+<div id="screen-stats" class="screen">
+  <div class="page-header">
+    <div class="page-title">Fortschritt</div>
+  </div>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Gewicht</div>
+      <div class="stat-val">67<span class="stat-unit"> kg</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Ziel</div>
+      <div class="stat-val">70<span class="stat-unit"> kg</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">5K</div>
+      <div class="stat-val">30<span class="stat-unit"> min</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Einheiten / Wo</div>
+      <div class="stat-val"><span id="stat-sessions">0</span><span class="stat-unit">/7</span></div>
+    </div>
+  </div>
+
+  <p class="section-heading">Ziele</p>
+  <div class="card">
+    <div class="prog-row">
+      <div class="prog-labels"><span>Gewicht aufbauen</span><span>67 / 70 kg</span></div>
+      <div class="prog-bar"><div class="prog-fill" style="width:96%;background:var(--accent)"></div></div>
+    </div>
+    <div class="prog-row">
+      <div class="prog-labels"><span>5K Lauf</span><span>30 → 25 min Ziel</span></div>
+      <div class="prog-bar"><div class="prog-fill" style="width:50%;background:var(--accent-water)"></div></div>
+    </div>
+    <div class="prog-row" style="margin-bottom:0">
+      <div class="prog-labels"><span>Halbmarathon</span><span>Training läuft</span></div>
+      <div class="prog-bar"><div class="prog-fill" style="width:20%;background:#ffa05a"></div></div>
+    </div>
+  </div>
+
+  <p class="section-heading">Diese Woche</p>
+  <div class="card" id="done-this-week">
+    <div style="text-align:center;padding:12px;color:var(--text3);font-size:13px">Noch keine Einheiten abgehakt</div>
+  </div>
+
+  <p class="section-heading">Wasser heute</p>
+  <div class="card" style="display:flex;align-items:center;gap:16px;padding:14px 16px">
+    <div style="font-size:32px">💧</div>
+    <div>
+      <div style="font-family:var(--font-display);font-size:22px;font-weight:700" id="stat-water">0 ml</div>
+      <div style="font-size:12px;color:var(--text2)" id="stat-water-pct">von 2500 ml Ziel</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- #app -->
+
+<!-- NAV -->
+<nav>
+  <button class="active" onclick="switchTab('training',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 4v16M18 4v16M6 12h12M3 8h3M18 8h3M3 16h3M18 16h3"/></svg>
+    Training
+  </button>
+  <button onclick="switchTab('water',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2C12 2 5 10 5 15a7 7 0 0014 0C19 10 12 2 12 2z"/></svg>
+    Wasser
+  </button>
+  <button onclick="switchTab('nutrition',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+    Ernährung
+  </button>
+  <button onclick="switchTab('stats',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    Fortschritt
+  </button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const PLAN = [
+  {day:"Montag",type:"strength",label:"Oberkörper + Core",exercises:[
+    {name:"Bankdrücken",detail:"4 × 8 — 70% 1RM"},
+    {name:"Klimmzüge",detail:"4 × max"},
+    {name:"Schulterdrücken",detail:"3 × 10"},
+    {name:"Rudern",detail:"3 × 10"},
+    {name:"Plank",detail:"3 × 60 Sek"}
+  ]},
+  {day:"Dienstag",type:"cardio",label:"Laufen 5–6 km",exercises:[
+    {name:"Warmup 10 min",detail:"Lockeres Joggen"},
+    {name:"Tempolauf 4 km",detail:"Pace ~5:30/km"},
+    {name:"Cooldown 10 min",detail:"Gehen + Dehnen"}
+  ]},
+  {day:"Mittwoch",type:"strength",label:"Unterkörper + Rücken",exercises:[
+    {name:"Kniebeugen",detail:"4 × 8 — 75% 1RM"},
+    {name:"Kreuzheben",detail:"3 × 6 — 80% 1RM"},
+    {name:"Beinpresse",detail:"3 × 12"},
+    {name:"Romanian Deadlift",detail:"3 × 10"},
+    {name:"Core Circuit",detail:"3 Runden"}
+  ]},
+  {day:"Donnerstag",type:"climb",label:"Bouldern / Klettern",exercises:[
+    {name:"Aufwärmen",detail:"15 min, leichte Routen"},
+    {name:"Projekte",detail:"60–75 min, max-Intensität"},
+    {name:"Fingerboard",detail:"Optional 10 min"}
+  ]},
+  {day:"Freitag",type:"strength",label:"Push + Arme",exercises:[
+    {name:"Dips",detail:"4 × 12"},
+    {name:"Incline Drücken",detail:"3 × 10"},
+    {name:"Lateral Raises",detail:"3 × 15"},
+    {name:"Bizeps Curls",detail:"3 × 12"},
+    {name:"Trizeps",detail:"3 × 12"}
+  ]},
+  {day:"Samstag",type:"cardio",label:"Langer Lauf",exercises:[
+    {name:"Laufen 8–10 km",detail:"Pace ~6:30/km, Zone 2"},
+    {name:"Mobility",detail:"15 min Dehnen nach dem Lauf"}
+  ]},
+  {day:"Sonntag",type:"rest",label:"Recovery",exercises:[
+    {name:"Aktive Erholung",detail:"Spazieren oder Yoga"},
+    {name:"Meal Prep",detail:"Vorbereitung für Woche"}
+  ]}
+];
+
+const tagMap = {
+  strength:{cls:'tag-strength',label:'💪 Kraft'},
+  cardio:{cls:'tag-cardio',label:'🏃 Cardio'},
+  climb:{cls:'tag-climb',label:'🧗 Klettern'},
+  rest:{cls:'tag-rest',label:'😴 Rest'}
+};
+
+// STATE
+let state = {
+  week: 1,
+  done: {},
+  water: [],
+  waterGoal: 2500,
+  reminderOn: false,
+  reminderInterval: 2,
+  reminderTimer: null,
+  nutritionGoal: 'maintain',
+  nutritionDiet: 'omni'
+};
+
+function saveState() { try { localStorage.setItem('df_state', JSON.stringify(state)); } catch(e){} }
+function loadState() {
+  try {
+    const s = localStorage.getItem('df_state');
+    if (s) {
+      const p = JSON.parse(s);
+      // merge, don't replace (add new keys)
+      Object.assign(state, p);
+      // filter water log to today only
+      const today = new Date().toDateString();
+      state.water = (state.water || []).filter(e => new Date(e.ts).toDateString() === today);
+    }
+  } catch(e) {}
+}
+
+// TRAINING
+function renderTraining() {
+  document.getElementById('week-label').textContent = 'Woche ' + state.week;
+  const today = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'][new Date().getDay()];
+  document.getElementById('training-date').textContent = new Date().toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('training-content').innerHTML = PLAN.map((d,i) => {
+    const t = tagMap[d.type];
+    const isToday = d.day === today && state.week === 1;
+    const rows = d.exercises.map((ex,j) => {
+      const key = `w${state.week}-d${i}-e${j}`;
+      const isDone = !!state.done[key];
+      return `<div class="ex-row">
+        <div class="ex-info"><div class="ex-name">${ex.name}</div><div class="ex-detail">${ex.detail}</div></div>
+        <button class="check-btn${isDone?' done':''}" onclick="toggleEx('${key}')" aria-label="abhaken">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+        </button>
+      </div>`;
+    }).join('');
+    return `<div class="card" style="${isToday?'border-color:rgba(200,240,106,0.25)':''}">
+      ${isToday?'<div style="font-size:11px;color:var(--accent);font-weight:600;letter-spacing:0.06em;margin-bottom:6px">HEUTE</div>':''}
+      <div style="font-size:12px;color:var(--text2);margin-bottom:2px">${d.day}</div>
+      <div style="font-family:var(--font-display);font-size:16px;font-weight:600;margin-bottom:8px">${d.label}</div>
+      <span class="tag ${t.cls}">${t.label}</span>
+      ${rows}
+    </div>`;
+  }).join('');
+  updateStats();
+}
+
+function toggleEx(key) {
+  state.done[key] = !state.done[key];
+  saveState();
+  renderTraining();
+  if (state.done[key]) showToast('✓ Abgehakt!');
+}
+
+function changeWeek(dir) {
+  state.week = Math.max(1, Math.min(16, state.week + dir));
+  saveState();
+  renderTraining();
+}
+
+// WATER
+function renderWater() {
+  const total = state.water.reduce((s,e) => s+e.ml, 0);
+  document.getElementById('water-ml').textContent = total;
+  document.getElementById('water-goal-lbl').textContent = state.waterGoal;
+  document.getElementById('goal-display').textContent = state.waterGoal + ' ml';
+  const pct = Math.min(1, total / state.waterGoal);
+  const circumference = 2 * Math.PI * 68;
+  document.getElementById('water-ring').style.strokeDashoffset = circumference * (1 - pct);
+  const log = document.getElementById('water-log');
+  if (!state.water.length) {
+    log.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text3);font-size:13px">Noch nichts getrunken heute</div>';
+  } else {
+    log.innerHTML = [...state.water].reverse().map(e => {
+      const t = new Date(e.ts);
+      const timeStr = t.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+      return `<div class="water-log-row"><span style="color:var(--accent-water)">${e.ml} ml</span><span class="water-time">${timeStr}</span></div>`;
+    }).join('');
+  }
+  document.getElementById('stat-water').textContent = total + ' ml';
+  document.getElementById('stat-water-pct').textContent = `von ${state.waterGoal} ml (${Math.round(pct*100)}%)`;
+
+  // hide notif banner if already granted
+  if (Notification.permission === 'granted') {
+    document.getElementById('notif-banner').style.display = 'none';
+  }
+
+  // update reminder toggle
+  const tog = document.getElementById('reminder-toggle');
+  tog.classList.toggle('on', state.reminderOn);
+  document.getElementById('reminder-settings').style.display = state.reminderOn ? 'block' : 'none';
+  document.getElementById('reminder-interval').value = String(state.reminderInterval);
+}
+
+function addWater(ml) {
+  const today = new Date().toDateString();
+  state.water = state.water.filter(e => new Date(e.ts).toDateString() === today);
+  state.water.push({ml, ts: Date.now()});
+  saveState();
+  renderWater();
+  const total = state.water.reduce((s,e) => s+e.ml, 0);
+  showToast(`+${ml} ml getrunken 💧`);
+  if (total >= state.waterGoal) {
+    setTimeout(() => showToast('🎉 Tagesziel erreicht!'), 800);
+  }
+}
+
+function resetWater() {
+  state.water = [];
+  saveState();
+  renderWater();
+}
+
+function adjustGoal(delta) {
+  state.waterGoal = Math.max(500, Math.min(5000, state.waterGoal + delta));
+  saveState();
+  renderWater();
+}
+
+async function requestNotifPermission() {
+  const perm = await Notification.requestPermission();
+  if (perm === 'granted') {
+    document.getElementById('notif-banner').style.display = 'none';
+    showToast('Benachrichtigungen aktiviert ✓');
+    if (state.reminderOn) startReminderTimer();
+  }
+}
+
+function toggleReminder() {
+  state.reminderOn = !state.reminderOn;
+  saveState();
+  if (state.reminderOn) {
+    if (Notification.permission !== 'granted') {
+      requestNotifPermission();
+    } else {
+      startReminderTimer();
+      showToast('Erinnerungen aktiviert 🔔');
+    }
+  } else {
+    stopReminderTimer();
+    showToast('Erinnerungen deaktiviert');
+  }
+  renderWater();
+}
+
+function saveReminderSettings() {
+  state.reminderInterval = parseFloat(document.getElementById('reminder-interval').value);
+  saveState();
+  if (state.reminderOn) { stopReminderTimer(); startReminderTimer(); }
+}
+
+function startReminderTimer() {
+  stopReminderTimer();
+  state.reminderTimer = setInterval(() => {
+    if (Notification.permission === 'granted') {
+      const total = state.water.reduce((s,e) => s+e.ml, 0);
+      const left = state.waterGoal - total;
+      if (left > 0) {
+        new Notification('💧 Trink-Erinnerung', {
+          body: `Noch ${left} ml bis zum Tagesziel. Trink jetzt ein Glas!`,
+          icon: 'icons/icon-192.png'
+        });
+      }
+    }
+  }, state.reminderInterval * 60 * 60 * 1000);
+}
+
+function stopReminderTimer() {
+  if (state.reminderTimer) { clearInterval(state.reminderTimer); state.reminderTimer = null; }
+}
+
+// NUTRITION
+function setGoal(el, val) {
+  state.nutritionGoal = val;
+  saveState();
+  document.querySelectorAll('[data-goal]').forEach(b => b.classList.toggle('active', b.dataset.goal === val));
+}
+function setDiet(el, val) {
+  state.nutritionDiet = val;
+  saveState();
+  document.querySelectorAll('[data-diet]').forEach(b => b.classList.toggle('active', b.dataset.diet === val));
+}
+
+async function generateMeal() {
+  const btn = document.getElementById('gen-btn');
+  const lbl = document.getElementById('gen-label');
+  const dots = document.getElementById('gen-dots');
+  const out = document.getElementById('meal-output');
+  btn.disabled = true;
+  lbl.textContent = 'Generiere';
+  dots.style.display = 'inline-flex';
+  out.innerHTML = '';
+  const goalText = {maintain:'Gewicht halten (~3000 kcal)',bulk:'Masse aufbauen (~3300 kcal Überschuss)',cut:'Körperfett reduzieren (~2400 kcal Defizit)'}[state.nutritionGoal];
+  const dietText = {omni:'keine Einschränkungen',veggie:'vegetarisch',vegan:'vegan'}[state.nutritionDiet];
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        messages:[{role:'user',content:`Erstelle einen Tagesernährungsplan auf Deutsch für einen 19-jährigen Fitness-Athleten (67 kg, Ziel 70 kg). Ziel: ${goalText}. Ernährung: ${dietText}. Proteinziel ~160g. Antworte NUR mit einem JSON-Array (kein Markdown) mit genau 5 Mahlzeiten. Felder: time, name, kcal (Zahl), protein (Zahl), carbs (Zahl), fat (Zahl), description (1 Satz mit konkreten Lebensmitteln).`}]
+      })
+    });
+    const data = await res.json();
+    const text = data.content.map(c=>c.text||'').join('');
+    const meals = JSON.parse(text.replace(/```json|```/g,'').trim());
+    let tk=0,tp=0,tc=0,tf=0;
+    out.innerHTML = `<div class="total-card" id="total-card" style="display:none"></div>` +
+      meals.map(m => {
+        tk+=m.kcal; tp+=m.protein; tc+=m.carbs; tf+=m.fat;
+        return `<div class="card meal-card">
+          <div class="meal-time-lbl">${m.time}</div>
+          <div class="meal-name">${m.name}</div>
+          <div class="meal-desc">${m.description}</div>
+          <div class="macro-pills">
+            <span class="macro-pill kcal">${Math.round(m.kcal)} kcal</span>
+            <span class="macro-pill">${Math.round(m.protein)}g Protein</span>
+            <span class="macro-pill">${Math.round(m.carbs)}g Carbs</span>
+            <span class="macro-pill">${Math.round(m.fat)}g Fett</span>
+          </div>
+        </div>`;
+      }).join('') +
+      `<div class="total-card">
+        <div class="total-item"><div class="total-val">${Math.round(tk)}</div><div class="total-lbl">kcal</div></div>
+        <div class="total-item"><div class="total-val">${Math.round(tp)}g</div><div class="total-lbl">Protein</div></div>
+        <div class="total-item"><div class="total-val">${Math.round(tc)}g</div><div class="total-lbl">Carbs</div></div>
+        <div class="total-item"><div class="total-val">${Math.round(tf)}g</div><div class="total-lbl">Fett</div></div>
+      </div>`;
+  } catch(e) {
+    out.innerHTML = '<div class="card card-sm" style="color:var(--text3);font-size:13px">Fehler beim Generieren. Bitte nochmal versuchen.</div>';
+  }
+  btn.disabled = false;
+  lbl.textContent = 'Plan neu generieren';
+  dots.style.display = 'none';
+}
+
+// STATS
+function updateStats() {
+  const days = new Set(
+    Object.keys(state.done).filter(k => state.done[k] && k.startsWith(`w${state.week}-`)).map(k => k.split('-')[1])
+  ).size;
+  const el = document.getElementById('stat-sessions');
+  if (el) el.textContent = days;
+  const doneDays = PLAN.filter((_,i) => {
+    return Object.keys(state.done).some(k => k.startsWith(`w${state.week}-d${i}-`) && state.done[k]);
+  });
+  const wrap = document.getElementById('done-this-week');
+  if (wrap) {
+    wrap.innerHTML = doneDays.length
+      ? doneDays.map(d => `<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border)"><span style="font-size:14px">${d.day}</span><span class="tag ${tagMap[d.type].cls}" style="margin:0">${tagMap[d.type].label}</span></div>`).join('')
+      : '<div style="text-align:center;padding:14px;color:var(--text3);font-size:13px">Noch keine Einheiten abgehakt</div>';
+  }
+}
+
+// UI
+function switchTab(name, btn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'water') renderWater();
+  if (name === 'stats') updateStats();
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// INIT
+loadState();
+renderTraining();
+renderWater();
+
+// Resume reminder on reload
+if (state.reminderOn && Notification.permission === 'granted') startReminderTimer();
+</script>
+<script>if("serviceWorker"in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("/sw.js").catch(()=>{}))};</script>
+</body>
+</html>

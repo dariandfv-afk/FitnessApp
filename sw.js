@@ -1,5 +1,9 @@
-const CACHE = 'dari-fitness-v1';
-const ASSETS = ['/', '/index.html', '/manifest.json'];
+const CACHE = 'dari-fitness-v2';
+const ASSETS = [
+  '/FitnessApp/',
+  '/FitnessApp/index.html',
+  '/FitnessApp/manifest.json'
+];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
